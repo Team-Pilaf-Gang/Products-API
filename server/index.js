@@ -2,13 +2,13 @@ require('dotenv').config();
 const express = require('express');
 const app = express();
 
-const path = require('path');
 const bodyParser = require('body-parser').json();
 
 const {getProducts, getOneProduct, getStyles, getRelated} = require('./controllers/index.js')
 
 app.use(express.json());
 app.use(bodyParser);
+
 
 // routes
 app.get('products/', getProducts);

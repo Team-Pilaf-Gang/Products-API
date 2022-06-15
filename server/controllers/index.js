@@ -1,41 +1,54 @@
-//const Model = require('./models/index.js');
+const {
+  readProducts,
+  readOneProduct,
+  readStyles,
+  readRelated
+} = require('./models/index.js');
 
 exports.getProducts = (req, res) => {
-  //model.find({})
+  const {page, count} = req.params;
+  readProducts(page, count)
     .then(data => {
       res.send(data);
     })
     .catch(error => {
       console.log(error);
+      res.sendStatus(500);
     })
 }
 
 exports.getOneProduct = (req, res) => {
-  //model.find({})
+  const {product_id} = req.params;
+  readOneProduct(product_id)
     .then(data => {
       res.send(data);
     })
     .catch(error => {
       console.log(error);
+      res.sendStatus(500);
     })
 }
 
 exports.getStyles = (req, res) => {
-  //model.find({})
+  const {product_id} = req.params;
+  readStyles(product_id)
     .then(data => {
       res.send(data);
     })
     .catch(error => {
       console.log(error);
+      res.sendStatus(500);
     })
 }
 
 exports.getRelated = (req, res) => {
-  //model.find({})
+  const {product_id} = req.params;
+  readRelated(product_id)
     .then(data => {
       res.send(data);
     })
     .catch(error => {
       console.log(error);
+      res.sendStatus(500);
     })
 }
