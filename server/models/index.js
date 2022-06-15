@@ -33,39 +33,34 @@ readProducts = function (page = 0, count = 5) {
 
 readOneProduct = function (productId) {
     return pool.connect().then((client) => {
-        const query = `select row_to_json(t)
-        from (
-        select products.id, products.name, products.slogan, products.description, products.category, products.default_price,
-            (
-            select features_and_values from features
-            where features.product_id = products.id
-        ) as features
-        from products
-        where products.id = $1
-        ) t`;
-
-        const query2 = `select
-        json_build_object(
+        const query = `
+        select
+            json_build_object(
                 'id', products.id,
                 'name', products.name,
-                'slogan', products.email,
+                'slogan', products.slogan,
                 'description', products.description,
                 'category', products.category,
                 'default_price', products.default_price,
-                'features', json_build_object(
-                        'id', ur.id,
-                        'feature', feature_and_values.feature
-                        'value', features_and_values.value
+                'features', array_agg(
+                    json_build_object(
+                        'feature', features.feature,
+                        'value', features.value
+                    )
                 )
             )
-        from products p
-        inner join features f on p.product.id = f.product_id`
+        from products
+        join features
+        on products.id = features.product_id
+        where products.id = $1
+        group by products.id;`
 
         return client
-        .query(query2, [productId])
+        .query(query, [productId])
         .then((res) => {
+            console.log(res.rows[0]['json_build_object'])
             client.release();
-            return res.rows[0].row_to_json;
+            return res.rows[0]['json_build_object'];
         })
         .catch((err) => {
             client.release();
@@ -76,27 +71,35 @@ readOneProduct = function (productId) {
 
 readStyles = function (productId) {
     return pool.connect().then((client) => {
-        const query = `select row_to_json(t)
-        from (
-        select products.id,
-            (
-            select array_to_json(array_agg(row_to_json(d)))
-            from (
-            select styles.style_id, styles.name, styles.original_price, styles.sale_price, styles.default_style, (
-                select photos_and_thumbnails from photos
-                where photos.style_id = styles.style_id
-            ) as photos,
-            (
-                select size_and_quantity from skus
-                where skus.style_id = styles.style_id
-            ) as skus
-            from styles
-            where styles.product_id = products.id
-            ) d
-        ) as results
-        from products
-        where products.id = $1
-        ) t`;
+        const query =`
+        select
+            json_build_object(
+                'product_id', styles.productid,
+                'results', array_agg(
+                    json_build_object(
+                        'style_id', styles.id,
+                        'name', styles.name,
+                        'original_price', styles.original_price,
+                        'sale_price', styles.sale_price,
+                        'default?', styles.default_style,
+                        'photos', array_agg(
+                            json_build_object(
+                                'thumbnail_url', photos.thumbnail_url,
+                                'url', photos.url
+                            )
+                        )
+                    ),
+                'skus', json_build_object(
+                    id, json_build_object(
+                        'quantity', skus.quantity,
+                        'size', skus.size,
+                        )
+                    )
+            )
+        from styles
+        join photos on photos.styleid = styles.id
+        join skus on skus.styleid = styles.id;`
+
         return client
         .query(query, [productId])
         .then((res) => {
