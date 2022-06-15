@@ -11,10 +11,10 @@ app.use(bodyParser);
 
 
 // routes
-app.get('products/', getProducts);
-app.get('products/:product_id', getOneProduct);
-app.get('products/:product_id/styles', getStyles);
-app.get('products/:product_id/related', getRelated);
+app.get('/products/', getProducts);
+app.get('/products/:product_id', getOneProduct);
+app.get('/products/:product_id/styles', getStyles);
+app.get('/products/:product_id/related', getRelated);
 
 
 app.listen(process.env.PORT);

@@ -1,24 +1,28 @@
+// CONNECTION
+require('dotenv').config();
 const axios = require("axios");
-const { Pool } = require("pg");
+const { Pool, Client } = require("pg");
 
 const pool = new Pool({
-    host: process.env.DB_HOST || 'localhost',
-    port: process.env.DB_PORT || 5432,
-    user: process.env.DB_USER || 'admin',
-    password: process.env.DB_PASSWORD || '',
-    database: process.env.DB_NAME || 'SDC',
-    "max": 20,
-  });
+    host: process.env.DB_HOST,
+    port: process.env.DB_PORT,
+    user: process.env.DB_USER,
+    password: process.env.DB_PASSWORD,
+    database: process.env.DB_DATABASE,
+});
 
-readList = function (page = 1, count = 5) {
+
+// MODELS
+
+readProducts = function (page = 0, count = 5) {
     return pool.connect().then((client) => {
-        const query = `SELECT * FROM products
-        LIMIT $2 OFFSET $1`;
+        const text = `SELECT * FROM products LIMIT $2 OFFSET $1`;
+        const values = [page, count]
         return client
-        .query(query, [page * count - count, count])
+        .query(text, values)
         .then((res) => {
             client.release();
-            return res.rows[0];
+            return res.rows;
         })
         .catch((err) => {
             client.release();
@@ -27,20 +31,38 @@ readList = function (page = 1, count = 5) {
     });
 }
 
-readProduct = function (productId) {
+readOneProduct = function (productId) {
     return pool.connect().then((client) => {
         const query = `select row_to_json(t)
         from (
         select products.id, products.name, products.slogan, products.description, products.category, products.default_price,
             (
             select features_and_values from features
-            where features.current_product_id = products.id
+            where features.product_id = products.id
         ) as features
         from products
         where products.id = $1
         ) t`;
+
+        const query2 = `select
+        json_build_object(
+                'id', products.id,
+                'name', products.name,
+                'slogan', products.email,
+                'description', products.description,
+                'category', products.category,
+                'default_price', products.default_price,
+                'features', json_build_object(
+                        'id', ur.id,
+                        'feature', feature_and_values.feature
+                        'value', features_and_values.value
+                )
+            )
+        from products p
+        inner join features f on p.product.id = f.product_id`
+
         return client
-        .query(query, [productId])
+        .query(query2, [productId])
         .then((res) => {
             client.release();
             return res.rows[0].row_to_json;
@@ -89,11 +111,10 @@ readStyles = function (productId) {
 }
 
 readRelated = function (productId) {
-    console.log("hello", productId);
     return pool.connect().then((client) => {
-        const query = `select array_agg(related_products.related_product_id)
-        from related_products
-        where related_products.current_product_id = $1`;
+        const query = `select array_agg(product_relations.related_product_id)
+        from product_relations
+        where product_relations.current_product_id = $1`;
         return client
         .query(query, [productId])
         .then((res) => {

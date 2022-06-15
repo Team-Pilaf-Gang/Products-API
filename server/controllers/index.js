@@ -3,7 +3,7 @@ const {
   readOneProduct,
   readStyles,
   readRelated
-} = require('./models/index.js');
+} = require('../models/index.js');
 
 exports.getProducts = (req, res) => {
   const {page, count} = req.params;
