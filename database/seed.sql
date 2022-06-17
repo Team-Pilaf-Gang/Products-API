@@ -78,4 +78,12 @@ DELIMITER ',' HEADER CSV
 WHERE current_product_id != 0 AND related_product_id != 0;
 
 
+-- create index for foreign keys
+
+CREATE INDEX product_id ON features(product_id);
+CREATE INDEX productId ON styles(productId);
+CREATE INDEX styleIdSkus ON skus(styleId);
+CREATE INDEX styleIdPhotos ON photos(styleId);
+CREATE INDEX current_product_id ON product_relations(current_product_id);
+
 
