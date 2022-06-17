@@ -58,7 +58,6 @@ readOneProduct = function (productId) {
         return client
         .query(query, [productId])
         .then((res) => {
-            console.log(res.rows[0]['json_build_object'])
             client.release();
             return res.rows[0]['json_build_object'];
         })
